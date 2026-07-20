@@ -134,6 +134,17 @@ html.light .portfolio-nav { background: rgba(255,255,255,.78); }
 .gradient-text { background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .cursor-blink::after { content: ''; display: inline-block; width: 3px; height: 1em; background: var(--accent); margin-left: 2px; vertical-align: text-bottom; animation: blink 1s steps(2) infinite; }
 
+/* NEW: Pricing Cards */
+.pricing-card { position: relative; transition: all .3s ease; }
+.pricing-card:hover { transform: translateY(-6px); border-color: var(--border-strong); box-shadow: 0 20px 40px -16px rgba(0,0,0,.6); }
+.pricing-card.recommended { border-color: var(--accent); box-shadow: 0 0 40px -10px var(--accent-glow); }
+.recommended-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 100px; text-transform: uppercase; letter-spacing: .5px; box-shadow: 0 4px 12px -2px var(--accent-glow); }
+
+/* NEW: Feature Lock */
+.lock-overlay { position: absolute; inset: 0; background: rgba(8,8,10,.75); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 16px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; z-index: 10; cursor: pointer; }
+html.light .lock-overlay { background: rgba(255,255,255,.85); }
+.lock-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--card); border: 1px solid var(--border-strong); display: flex; align-items: center; justify-content: center; color: var(--accent); margin-bottom: 4px; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
