@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Authentication — Folio</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <style>
+    /* Design Tokens */
+    :root {
+      --bg: #08080a; --bg-2: #0f0f12; --card: #141417; --card-2: #1a1a1e;
+      --border: rgba(255,255,255,.08); --border-strong: rgba(255,255,255,.14);
+      --text: #f5f5f7; --text-muted: #86868b; --text-dim: #5c5c63;
+      --accent: #ff6b4a; --accent-hover: #ff8569;
+      --accent-soft: rgba(255,107,74,.12); --accent-glow: rgba(255,107,74,.35);
+      --success: #4ade80; --warning: #fbbf24; --danger: #f87171;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Manrope', system-ui, sans-serif;
+      background: var(--bg); color: var(--text); margin: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-serif { font-family: 'Instrument Serif', Georgia, serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* Animations */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes scaleIn { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
+    @keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes drift { 0% { transform: translate(0,0) scale(1); } 33% { transform: translate(40px,-30px) scale(1.1); } 66% { transform: translate(-30px,20px) scale(.95); } 100% { transform: translate(0,0) scale(1); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes dotPulse { 0%,80%,100% { opacity:.3; transform:scale(.8); } 40% { opacity:1; transform:scale(1); } }
+    @keyframes blink { 0%,50% { opacity: 1; } 50.01%,100% { opacity: 0; } }
+
+    .animate-fade-in { animation: fadeIn .5s ease-out both; }
+    .animate-scale-in { animation: scaleIn .4s ease-out both; }
+    .animate-slide-in { animation: slideInRight .3s ease-out; }
+
+    /* Components */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; font-weight: 600; font-size: 14px; padding: 10px 18px; border-radius: 12px; cursor: pointer; border: 1px solid transparent; transition: all .2s ease; white-space: nowrap; text-decoration: none; width: 100%; }
+    .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 8px 24px -8px var(--accent-glow); }
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: .7; cursor: not-allowed; transform: none; }
+    .btn-secondary { background: var(--card); color: var(--text); border-color: var(--border); }
+    .btn-secondary:hover { background: var(--card-2); border-color: var(--border-strong); }
+    .btn-lg { padding: 14px 24px; font-size: 15px; border-radius: 14px; }
+
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; }
+    
+    .input { width: 100%; background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; color: var(--text); font-family: inherit; font-size: 14px; transition: all .2s ease; outline: none; }
+    .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .input.error { border-color: var(--danger); }
+    .label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .helper { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+    .error-text { font-size: 12px; color: var(--danger); margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+
+    .checkbox { width: 18px; height: 18px; border: 1.5px solid var(--border-strong); border-radius: 5px; background: var(--bg-2); cursor: pointer; position: relative; transition: all .15s ease; flex-shrink: 0; }
+    .checkbox.checked { background: var(--accent); border-color: var(--accent); }
+    .checkbox.checked::after { content: ''; position: absolute; left: 5px; top: 2px; width: 5px; height: 9px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+
+    .toggle-btn { flex: 1; padding: 10px; text-align: center; font-size: 14px; font-weight: 600; color: var(--text-muted); cursor: pointer; border-radius: 10px; transition: all .2s ease; background: transparent; border: none; }
+    .toggle-btn.active { background: var(--bg-2); color: var(--text); box-shadow: 0 4px 12px -4px rgba(0,0,0,.3); }
+
+    .logo-mark { width: 32px; height: 32px; border-radius: 9px; background: var(--accent); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 16px; box-shadow: 0 4px 12px -2px var(--accent-glow); font-family: 'Instrument Serif', serif; }
+
+    .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px); background-size: 40px 40px; mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%); -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%); opacity: .6; pointer-events: none; }
+    .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: .3; animation: drift 20s ease-in-out infinite; pointer-events: none; }
+
+    .dot-loader { display: inline-flex; gap: 4px; align-items: center; }
+    .dot-loader span { width: 6px; height: 6px; background: currentColor; border-radius: 50%; animation: dotPulse 1.4s infinite ease-in-out both; }
+    .dot-loader span:nth-child(1) { animation-delay: -.32s; }
+    .dot-loader span:nth-child(2) { animation-delay: -.16s; }
+
+    /* Toasts */
+    #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+    .toast { background: var(--card); border: 1px solid var(--border-strong); border-radius: 12px; padding: 12px 16px; min-width: 280px; max-width: 380px; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 12px 32px -12px rgba(0,0,0,.6); animation: slideInRight .3s ease-out; pointer-events: auto; }
+    .toast-icon { width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px; }
+    .toast.success .toast-icon { background: rgba(74,222,128,.15); color: var(--success); }
+    .toast.error .toast-icon { background: rgba(248,113,113,.15); color: var(--danger); }
+    .toast.info .toast-icon { background: var(--accent-soft); color: var(--accent); }
+    .toast-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .toast-msg { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    /* Modal */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; animation: fadeIn .2s ease-out; }
+  </style>
+</head>
+<body>
+
+  <div id="auth-container" class="min-h-screen flex items-center justify-center px-6 py-12 relative overflow-hidden">
+    <!-- Background elements -->
+    <div class="hero-grid"></div>
+    <div class="orb" style="width:400px;height:400px;background:var(--accent);top:-150px;left:-150px;"></div>
+    <div class="orb" style="width:400px;height:400px;background:#4a90ff;bottom:-150px;right:-150px;animation-delay:-7s;opacity:.2;"></div>
+
+    <div class="w-full max-w-md relative z-10">
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-2.5 justify-center mb-8 animate-fade-in">
+        <div class="logo-mark">F</div>
+        <span class="font-semibold text-lg tracking-tight">Folio</span>
+      </a>
+
+      <!-- Auth Card -->
+      <div class="card p-8 animate-scale-in">
+        
+        <!-- Toggle Header -->
+        <div class="flex p-1 rounded-xl mb-8" style="background:var(--bg-2);">
+          <button class="toggle-btn active" id="tab-login" onclick="switchView('login')">Sign in</button>
+          <button class="toggle-btn" id="tab-register" onclick="switchView('register')">Create account</button>
+        </div>
+
+        <!-- Login View -->
+        <div id="view-login" class="animate-fade-in">
+          <h1 class="text-2xl font-bold tracking-tight text-center">Welcome back</h1>
+          <p class="text-sm text-center mt-1 mb-6" style="color:var(--text-muted);">Sign in to continue to your dashboard</p>
+
+          <form id="login-form" class="space-y-4">
+            <div>
+              <label class="label">Email</label>
+              <input type="email" name="email" class="input" placeholder="you@example.com" autocomplete="email" required/>
+              <div class="error-text hidden" data-error="email"></div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="label mb-0">Password</label>
+                <button type="button" onclick="openForgotPassword()" class="text-xs font-medium hover:underline" style="color:var(--accent);">Forgot?</button>
+              </div>
+              <div class="relative">
+                <input type="password" name="password" id="login-password" class="input pr-11" placeholder="••••••••" autocomplete="current-password" required/>
+                <button type="button" onclick="togglePassword('login-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-[color:var(--text-dim)] hover:text-[color:var(--text)] transition-colors" aria-label="Toggle password">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+              <div class="error-text hidden" data-error="password"></div>
+            </div>
+
+            <label class="flex items-center gap-2.5 cursor-pointer select-none pt-1">
+              <div class="checkbox" id="remember-checkbox" onclick="this.classList.toggle('checked')"></div>
+              <span class="text-sm" style="color:var(--text-muted);">Remember me for 30 days</span>
+            </label>
+
+            <div id="login-error" class="hidden p-3 rounded-lg text-sm flex items-center gap-2" style="background:rgba(248,113,113,.1);color:var(--danger);border:1px solid rgba(248,113,113,.2);">
+              <i class="fas fa-circle-exclamation"></i><span></span>
+            </div>
+
+            <button type="submit" id="login-btn" class="btn btn-primary btn-lg">
+              <span class="btn-label">Sign in</span>
+            </button>
+          </form>
+
+          <div class="my-6 flex items-center gap-3">
+            <div class="h-px flex-1" style="background:var(--border);"></div>
+            <span class="text-xs" style="color:var(--text-dim);">OR</span>
+            <div class="h-px flex-1" style="background:var(--border);"></div>
+          </div>
+
+          <button onclick="demoLogin()" class="btn btn-secondary btn-lg">
+            <i class="fas fa-bolt"></i> Continue with demo account
+          </button>
+        </div>
+
+        <!-- Register View -->
+        <div id="view-register" class="hidden">
+          <h1 class="text-2xl font-bold tracking-tight text-center">Create your account</h1>
+          <p class="text-sm text-center mt-1 mb-6" style="color:var(--text-muted);">Start building your portfolio in minutes</p>
+
+          <form id="register-form" class="space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="label">First name</label>
+                <input type="text" name="firstName" class="input" placeholder="Jane" autocomplete="given-name" required/>
+                <div class="error-text hidden" data-error="firstName"></div>
+              </div>
+              <div>
+                <label class="label">Last name</label>
+                <input type="text" name="lastName" class="input" placeholder="Chen" autocomplete="family-name" required/>
+                <div class="error-text hidden" data-error="lastName"></div>
+              </div>
+            </div>
+
+            <div>
+              <label class="label">Username</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-mono" style="color:var(--text-dim);">folio.app/u/</span>
+                <input type="text" name="username" class="input pl-[110px] font-mono" placeholder="jane" autocomplete="username" required pattern="[a-zA-Z0-9_]{3,20}"/>
+              </div>
+              <div class="helper">Letters, numbers, underscores. 3–20 characters.</div>
+              <div class="error-text hidden" data-error="username"></div>
+            </div>
+
+            <div>
+              <label class="label">Email</label>
+              <input type="email" name="email" class="input" placeholder="you@example.com" autocomplete="email" required/>
+              <div class="error-text hidden" data-error="email"></div>
+            </div>
+
+            <div>
+              <label class="label">Password</label>
+              <div class="relative">
+                <input type="password" name="password" id="reg-password" class="input pr-11" placeholder="At least 8 characters" autocomplete="new-password" required/>
+                <button type="button" onclick="togglePassword('reg-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-[color:var(--text-dim)] hover:text-[color:var(--text)] transition-colors" aria-label="Toggle password">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+              <div class="helper" id="password-strength"></div>
+              <div class="error-text hidden" data-error="password"></div>
+            </div>
+
+            <div>
+              <label class="label">Confirm password</label>
+              <div class="relative">
+                <input type="password" name="confirmPassword" id="reg-confirm" class="input pr-11" placeholder="Re-enter your password" autocomplete="new-password" required/>
+                <button type="button" onclick="togglePassword('reg-confirm', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-[color:var(--text-dim)] hover:text-[color:var(--text)] transition-colors" aria-label="Toggle password">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+              <div class="error-text hidden" data-error="confirmPassword"></div>
+            </div>
+
+            <div id="register-error" class="hidden p-3 rounded-lg text-sm flex items-center gap-2" style="background:rgba(248,113,113,.1);color:var(--danger);border:1px solid rgba(248,113,113,.2);">
+              <i class="fas fa-circle-exclamation"></i><span></span>
+            </div>
+
+            <button type="submit" id="register-btn" class="btn btn-primary btn-lg">
+              <span class="btn-label">Create account</span>
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+      <p class="mt-6 text-center text-xs" style="color:var(--text-dim);">
+        By continuing, you agree to our Terms and Privacy Policy.
+      </p>
+    </div>
+  </div>
+
+  <!-- Toast & Modal Containers -->
+  <div id="toast-container"></div>
+  <div id="modal-root"></div>
+
+  <script>
+    // ---------- View Switching ----------
+    function switchView(view) {
+      const loginView = document.getElementById('view-login');
+      const registerView = document.getElementById('view-register');
+      const tabLogin = document.getElementById('tab-login');
+      const tabRegister = document.getElementById('tab-register');
+
+      if (view === 'login') {
+        loginView.classList.remove('hidden');
+        registerView.classList.add('hidden');
+        tabLogin.classList.add('active');
+        tabRegister.classList.remove('active');
+        loginView.classList.add('animate-fade-in');
+        setTimeout(() => loginView.classList.remove('animate-fade-in'), 500);
+      } else {
+        loginView.classList.add('hidden');
+        registerView.classList.remove('hidden');
+        tabLogin.classList.remove('active');
+        tabRegister.classList.add('active');
+        registerView.classList.add('animate-fade-in');
+        setTimeout(() => registerView.classList.remove('animate-fade-in'), 500);
+      }
+    }
+
+    // ---------- UI Helpers ----------
+    function togglePassword(inputId, btn) {
+      const input = document.getElementById(inputId);
+      const icon = btn.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+      } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+      }
+    }
+
+    function toast(type, title, message) {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      const icons = { success: 'fa-check', error: 'fa-xmark', info: 'fa-circle-info' };
+      el.innerHTML = `
+        <div class="toast-icon"><i class="fas ${icons[type] || icons.info}"></i></div>
+        <div style="flex:1;">
+          <div class="toast-title">${title}</div>
+          ${message ? `<div class="toast-msg">${message}</div>` : ''}
+        </div>
+        <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--text-dim);cursor:pointer;padding:0 4px;">
+          <i class="fas fa-xmark" style="font-size:12px;"></i>
+        </button>`;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.transition = 'all .3s ease';
+        el.style.opacity = '0';
+        el.style.transform = 'translateX(20px)';
+        setTimeout(() => el.remove(), 300);
+      }, 4000);
+    }
+
+    function openForgotPassword() {
+      const root = document.getElementById('modal-root');
+      root.innerHTML = `
+        <div class="modal-backdrop" onclick="if(event.target===this)closeModal()">
+          <div class="card p-8 max-w-md w-full animate-scale-in">
+            <h3 class="text-xl font-bold mb-2">Reset your password</h3>
+            <p class="text-sm mb-5" style="color:var(--text-muted);">Enter your email and we'll send you a reset link.</p>
+            <input type="email" class="input mb-4" placeholder="you@example.com" id="reset-email"/>
+            <div class="flex gap-2 justify-end">
+              <button onclick="closeModal()" class="btn btn-secondary" style="width:auto;padding:10px 18px;">Cancel</button>
+              <button onclick="submitReset()" class="btn btn-primary" style="width:auto;padding:10px 18px;">Send reset link</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function closeModal() {
+      document.getElementById('modal-root').innerHTML = '';
+    }
+
+    function submitReset() {
+      const email = document.getElementById('reset-email').value.trim();
+      if (!email) {
+        toast('error', 'Email required', 'Please enter your email address');
+        return;
+      }
+      closeModal();
+      toast('success', 'Check your inbox', `If an account exists for ${email}, a reset link is on its way.`);
+    }
+
+    function demoLogin() {
+      const btn = event.currentTarget;
+      btn.disabled = true;
+      btn.innerHTML = `<span class="dot-loader"><span></span><span></span><span></span></span> Loading demo...`;
+      
+      setTimeout(() => {
+        toast('success', 'Demo Ready', 'You are now signed in as Demo User.');
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fas fa-bolt"></i> Continue with demo account`;
+      }, 1000);
+    }
+
+    // ---------- Password Strength Meter ----------
+    const pwdInput = document.querySelector('input[name="password"]');
+    if (pwdInput) {
+      pwdInput.addEventListener('input', (e) => {
+        const v = e.target.value;
+        const el = document.getElementById('password-strength');
+        if (!v) { el.textContent = ''; return; }
+        
+        let score = 0;
+        if (v.length >= 8) score++;
+        if (/[A-Z]/.test(v)) score++;
+        if (/[0-9]/.test(v)) score++;
+        if (/[^A-Za-z0-9]/.test(v)) score++;
+        
+        const labels = ['Weak', 'Fair', 'Good', 'Strong'];
+        const colors = ['var(--danger)', 'var(--warning)', 'var(--accent)', 'var(--success)'];
+        
+        el.innerHTML = `<span style="color:${colors[score-1]};font-weight:600;">${labels[score-1]}</span> password`;
+      });
+    }
+
+    // ---------- Form Submissions ----------
+    document.getElementById('login-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('login-btn');
+      const label = btn.querySelector('.btn-label');
+      const email = e.target.email.value.trim();
+      const password = e.target.password.value;
+      const errorBox = document.getElementById('login-error');
+
+      // Basic validation
+      if (!email || !password) {
+        errorBox.querySelector('span').textContent = 'Please fill in all fields';
+        errorBox.classList.remove('hidden');
+        return;
+      }
+      errorBox.classList.add('hidden');
+
+      // Loading state
+      btn.disabled = true;
+      label.innerHTML = `<span class="dot-loader"><span></span><span></span><span></span></span> Signing in...`;
+
+      // Simulate API call
+      setTimeout(() => {
+        btn.disabled = false;
+        label.textContent = 'Sign in';
+        toast('success', 'Welcome back!', `Signed in as ${email}`);
+      }, 1500);
+    });
+
+    document.getElementById('register-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target));
+      const errBox = document.getElementById('register-error');
+      const btn = document.getElementById('register-btn');
+      const label = btn.querySelector('.btn-label');
+
+      // Clear previous errors
+      document.querySelectorAll('[data-error]').forEach(el => { el.classList.add('hidden'); el.textContent=''; });
+      document.querySelectorAll('.input').forEach(i => i.classList.remove('error'));
+      errBox.classList.add('hidden');
+
+      let hasError = false;
+      const showErr = (name, msg) => {
+        const el = document.querySelector(`[data-error="${name}"]`);
+        if (el) { el.textContent = msg; el.classList.remove('hidden'); }
+        const input = document.querySelector(`[name="${name}"]`);
+        if (input) input.classList.add('error');
+        hasError = true;
+      };
+
+      // Validation
+      if (data.firstName.trim().length < 1) showErr('firstName', 'First name is required');
+      if (data.lastName.trim().length < 1) showErr('lastName', 'Last name is required');
+      if (!/^[a-zA-Z0-9_]{3,20}$/.test(data.username)) showErr('username', '3–20 letters, numbers, or underscores');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) showErr('email', 'Enter a valid email');
+      if (data.password.length < 8) showErr('password', 'At least 8 characters');
+      if (data.password !== data.confirmPassword) showErr('confirmPassword', 'Passwords do not match');
+
+      if (hasError) return;
+
+      // Loading state
+      btn.disabled = true;
+      label.innerHTML = `<span class="dot-loader"><span></span><span></span><span></span></span> Creating account...`;
+
+      // Simulate API call
+      setTimeout(() => {
+        btn.disabled = false;
+        label.textContent = 'Create account';
+        toast('success', 'Welcome to Folio', 'Your account is ready');
+      }, 1500);
+    });
+  </script>
+</body>
+</html>
